@@ -21,6 +21,11 @@ export class ApiRouteManager implements IRouteManager
         return this;
     }
 
+    /**
+     * Initialize the JSON API Routes of the server.
+     * Only initialize this after all of the api route controllers have been initialized.
+     * This method should be called last.
+     */
     initialize(): void
     {
        this.routes.forEach(r =>

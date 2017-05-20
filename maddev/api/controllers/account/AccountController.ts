@@ -6,7 +6,6 @@ export class AccountController
 
     constructor()
     {
-        console.log("in acc controller")
     }
 
     getTotalAccounts() : number
