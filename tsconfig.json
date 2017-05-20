@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": true
+  },
+  "exclude": [
+    "node_modules",
+    "ext",
+    "overrides",
+    "resources",
+    "sass",
+    "build",
+    "packages",
+    "help",
+    "typings/browser",
+    "typings/browser.d.ts"
+  ]
+}
