@@ -1,6 +1,5 @@
 import express = require('@types/express');
 import {Paypal} from "../payment/paypal/Paypal";
-import {ApiType} from "../payment/paypal/impl/PaypalApiType";
 import {PaypalSettings} from "../payment/paypal/internal/PaypalSettings";
 import {IApiError} from "../../impl/IApiError";
 import {Util} from "../../util/Util";
@@ -10,6 +9,7 @@ import {ProcessedPaypalOrder} from "../../models/ProcessedOrder";
 import {Order, Orders} from "../../models/Order";
 import {UnprocessedPaypal, UnprocessedPaypals} from "../../models/UnprocessedPaypal";
 import {PaymentMethod} from "../../models/Payment";
+import {Telegram} from "../../util/Telegram";
 
 export class OrderController {
 
@@ -29,7 +29,7 @@ export class OrderController {
         if(buyerEmail != null && (typeof buyerEmail != 'string') || !Util.isEmail(buyerEmail)) {
             return {'error' : 'Invalid email.'};
         }
-        const settings = await PaypalSettings.generate(ApiType.SANDBOX);
+        const settings = await PaypalSettings.generate();
         const paypal = new Paypal(settings);
         try {
             const checkoutUrl = await paypal.createPayment(quantity, ip, buyerEmail);
@@ -52,7 +52,7 @@ export class OrderController {
      * @returns {Promise<any>}
      */
     async completeOrder(paymentId : string, payerId) : Promise<IAccount[] | IApiError> {
-        const paypalSettings = await PaypalSettings.generate(ApiType.SANDBOX);
+        const paypalSettings = await PaypalSettings.generate();
         const executor = new PaymentExecutor(paymentId, payerId, paypalSettings);
         let res;
         try {
@@ -92,6 +92,7 @@ export class OrderController {
                 details.total, details.ip, details.buyerEmail, PaymentMethod.PAYPAL, names, order.buyer
             );
             const create = await Orders.create(o);
+            Telegram.logPurchase(create);
             return create['_id'] != null;
         } catch(err) {
             console.log(err);

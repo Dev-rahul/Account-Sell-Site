@@ -1,5 +1,5 @@
 import {ApiType} from "../impl/PaypalApiType";
-import {SiteConfig} from "../../../../models/SiteConfig";
+import {ISiteConfig, SiteConfig, SiteConfigs} from "../../../../models/SiteConfig";
 
 export class PaypalSettings {
 
@@ -13,7 +13,17 @@ export class PaypalSettings {
         this.apiUrl = apiUrl;
     }
 
-    static async generate(type: ApiType) {
+    static async generate(type?: ApiType) {
+        /**
+         * If we do not pass in which api to use, try to guess by checking if we are in dev mode.
+         */
+        if(type == null) {
+            const setting = await SiteConfigs.findOne({key : 'isDevMode'}).lean().exec() as ISiteConfig;
+            if(setting != null) {
+                const isDev : boolean = setting.value;
+                type = isDev ? ApiType.SANDBOX : ApiType.LIVE;
+            }
+        }
         let websiteUrl = null;
         let apiUrl = null;
         if (type == ApiType.SANDBOX) {

@@ -5,6 +5,7 @@ import {Paypal} from "./Paypal";
 import rp = require('request-promise');
 import {IApiError} from "../../../impl/IApiError";
 import {ProcessedPaypalOrder} from "../../../models/ProcessedOrder";
+import {Telegram} from "../../../util/Telegram";
 
 export class PaymentExecutor {
 
@@ -54,9 +55,19 @@ export class PaymentExecutor {
             await controller.setUnpurchased(purchase);
             return complete as IApiError;
         }
+        /**
+         * If no errors, we can assume it completed successfully,
+         * but the state may not be approved yet.
+         * @type {IExecutedPaymentResult}
+         */
         const processed = complete as IExecutedPaymentResult;
+        /**
+         * Check to see if its actually paid yet,
+         * if not, we can't return the accounts.
+         */
         if(processed.state !== 'approved') {
             console.log(`Recieved order but not approved yet. ${processed.id}`);
+            Telegram.log(`Recieved order but not approved yet. ${processed.id}`);
             return {error : 'Your order has not approved yet, please stay on the page. You will be redirected when finished.'}
         }
         return {

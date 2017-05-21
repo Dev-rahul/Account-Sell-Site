@@ -6,6 +6,7 @@ import {ApiRouteManager} from "./routes/ApiRouteManager";
 import {ApiAccountRoutes} from "./routes/children/ApiAccountRoutes";
 import {MongoError} from "mongodb";
 import {ApiOrderRoutes} from "./routes/children/ApiOrderRoutes";
+import {Telegram} from "./util/Telegram";
 
 class App {
     constructor() {
@@ -44,11 +45,15 @@ class App {
 
         mongoose.connect("mongodb://localhost/accountseller", (err: MongoError) => {
             if (err) {
+                Telegram.log(err.message);
                 console.log(err);
                 return;
             }
             console.log("Connected to MongoDB.");
         });
+
+        Telegram.initialize();
+
     }
 }
 
