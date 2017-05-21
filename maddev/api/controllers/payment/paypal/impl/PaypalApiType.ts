@@ -1,4 +1,3 @@
-export enum ApiType
-{
+export enum ApiType {
     SANDBOX, LIVE
 }

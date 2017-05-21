@@ -1,9 +1,7 @@
-export class Payment
-{
+export class Payment {
 
 }
 
-export enum PaymentMethod
-{
+export enum PaymentMethod {
     PAYPAL, BITCOIN
 }

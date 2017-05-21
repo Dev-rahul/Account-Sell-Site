@@ -1,25 +1,21 @@
 import {IRouteManager} from "./impl/IRouteManager";
 import express = require('@types/express');
 
-export class ViewRouteManager implements IRouteManager
-{
-    private router : express.Application;
-    private views : IViewRoutes[];
+export class ViewRouteManager implements IRouteManager {
+    private router: express.Application;
+    private views: IViewRoutes[];
 
-    constructor(router: express.Application)
-    {
+    constructor(router: express.Application) {
         this.router = router;
         this.views = [];
     }
 
-    addView(path : string, name : string) : ViewRouteManager
-    {
-        this.views.push({path : path, name : name});
+    addView(path: string, name: string): ViewRouteManager {
+        this.views.push({path: path, name: name});
         return this;
     }
 
-    initialize(): void
-    {
+    initialize(): void {
         console.log("View routes have been initialized.");
         const stack = this.router._router.stack;
         const paths = [];
@@ -29,19 +25,18 @@ export class ViewRouteManager implements IRouteManager
          * registered with the path, to prevent duplicates.
          */
         stack.forEach(s => {
-            if(s == null) return;
+            if (s == null) return;
             paths.push(s);
         });
         this.views.forEach(v => {
             const exists = paths.indexOf(v.path) != -1;
-            if(exists) return;
+            if (exists) return;
             this.router.get(v.path, (req, res) => res.render(v.name));
         })
     }
 }
 
-class IViewRoutes
-{
-    path : string;
-    name : string;
+class IViewRoutes {
+    path: string;
+    name: string;
 }

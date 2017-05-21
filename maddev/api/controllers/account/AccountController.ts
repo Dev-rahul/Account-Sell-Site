@@ -1,41 +1,35 @@
 import express = require('@types/express');
 import {Accounts, IAccount} from "../../models/Account";
 
-export class AccountController
-{
+export class AccountController {
 
-    async getTotalAccounts() : Promise<number>
-    {
-        return await Accounts.find({purchased : false}).count();
+    async getTotalAccounts(): Promise<number> {
+        return await Accounts.find({purchased: false}).count();
     }
 
     /**
      * Grabs a certain quantity of accounts and sets them as purchased, then returns them.
      * This method assures that each account is unique.
      */
-    async setPurchased(count : number) : Promise<IAccount[]>
-    {
+    async setPurchased(count: number): Promise<IAccount[]> {
         const accounts = [];
-        for(let i = 0; i < count; i++)
-        {
+        for (let i = 0; i < count; i++) {
             /**
              * Use findOneAndUpdate to lock the document while it is being updated,
              * so another query from another purchase etc, cannot read this document
              * and return the same accounts.
              */
-            const res = Accounts.findOneAndUpdate({purchased : false}, {purchased : true});
+            const res = Accounts.findOneAndUpdate({purchased: false}, {purchased: true});
             accounts.push(res);
         }
         return accounts;
     }
 }
 
-export class AccountControllerRoutes
-{
-    private static readonly controller : AccountController = new AccountController();
+export class AccountControllerRoutes {
+    private static readonly controller: AccountController = new AccountController();
 
-    async getTotalAccounts(req : express.Request, res : express.Response)
-    {
+    async getTotalAccounts(req: express.Request, res: express.Response) {
         const controller = AccountControllerRoutes.controller;
         return res.json({'count': await controller.getTotalAccounts()});
     }

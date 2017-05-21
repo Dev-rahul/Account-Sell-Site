@@ -1,4 +1,3 @@
-
 import path = require('path');
 import mongoose = require('mongoose');
 import {WebServer} from "./WebServer";
@@ -6,21 +5,18 @@ import {ViewRouteManager} from "./routes/ViewRouteManager";
 import {ApiRouteManager} from "./routes/ApiRouteManager";
 import {ApiAccountRoutes} from "./routes/children/ApiAccountRoutes";
 import {MongoError} from "mongodb";
-import {Accounts} from "./models/Account";
 import {Paypal} from "./controllers/payment/paypal/Paypal";
 import {ApiType} from "./controllers/payment/paypal/impl/PaypalApiType";
 import {PaypalSettings} from "./controllers/payment/paypal/internal/PaypalSettings";
 
-class App
-{
-    constructor()
-    {
+class App {
+    constructor() {
         const server = new WebServer(
-        {
-            port : 3000,
-            staticPath : path.join(__dirname, '../', 'client', 'public'),
-            viewPath : path.join(__dirname, '../', 'client', 'views')
-        });
+            {
+                port: 3000,
+                staticPath: path.join(__dirname, '../', 'client', 'public'),
+                viewPath: path.join(__dirname, '../', 'client', 'views')
+            });
 
         const apiManager = new ApiRouteManager("/api", server.app);
 
@@ -48,16 +44,15 @@ class App
          */
         server.listen();
 
-        mongoose.connect("mongodb://localhost/accountseller", (err : MongoError) => {
-            if(err) {
+        mongoose.connect("mongodb://localhost/accountseller", (err: MongoError) => {
+            if (err) {
                 console.log(err);
                 return;
             }
             console.log("Connected to MongoDB.");
         });
 
-        const getKey = async() =>
-        {
+        const getKey = async () => {
             const settings = await PaypalSettings.generate(ApiType.SANDBOX);
             const paypal = new Paypal(settings);
             const payment = await paypal.createPayment(10);
@@ -67,5 +62,6 @@ class App
     }
 
 }
+
 new App();
 

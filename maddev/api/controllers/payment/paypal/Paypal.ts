@@ -1,26 +1,22 @@
 import {ISiteConfig, SiteConfigs} from "../../../models/SiteConfig";
-import rp = require('request-promise');
 import {ApiType} from "./impl/PaypalApiType";
 import {PaypalSettings} from "./internal/PaypalSettings";
+import rp = require('request-promise');
 
-export class Paypal
-{
-    private settings : PaypalSettings;
+export class Paypal {
+    private settings: PaypalSettings;
 
-    constructor(settings : PaypalSettings)
-    {
+    constructor(settings: PaypalSettings) {
         this.settings = settings;
     }
 
-    async createPayment(quantity: number)
-    {
+    async createPayment(quantity: number) {
         /**
          * Lookup the account price that we currently have set
          * so we can generate the total based on the quantity.
          */
         const res = await SiteConfigs.findOne({key: 'accountPrice'}).lean().exec() as ISiteConfig;
-        if (res == null)
-        {
+        if (res == null) {
             throw new Error("Failed to create payment, Please set accountPrice in site configs.");
         }
         /**
@@ -28,41 +24,36 @@ export class Paypal
          * Otherwise the total will not work.
          */
         const price = res.value as number;
-        if (typeof price !== 'number' || isNaN(price) || price < 0)
-        {
+        if (typeof price !== 'number' || isNaN(price) || price < 0) {
             throw new Error("Invalid price set for accounts. Please check site configs.");
         }
         /**
          * The order data of the actual paypal order, sent to the Paypal API to create us an order.
          */
         const orderData =
-        {
+            {
                 intent: 'order',
-                payer:
-                {
+                payer: {
                     "payment_method": "paypal"
                 },
                 transactions:
-                [{
-                    amount:
-                    {
-                        currency: 'USD',
-                        total: (quantity * price).toFixed(2),
-                    },
-                    description: 'Runescape Accounts'
-                }],
-                redirect_urls:
-                {
+                    [{
+                        amount: {
+                            currency: 'USD',
+                            total: (quantity * price).toFixed(2),
+                        },
+                        description: 'Runescape Accounts'
+                    }],
+                redirect_urls: {
                     "return_url": `${this.settings.websiteUrl}/return`,
                     "cancel_url": `${this.settings.websiteUrl}/cancel`
                 }
-        };
+            };
         /**
          * Get the authorization token so we can pass it with the api call.
          */
         const key = await this.getAccessToken();
-        if (key == null)
-        {
+        if (key == null) {
             throw new Error("Failed to get access key to create order.");
         }
         /**
@@ -72,10 +63,9 @@ export class Paypal
         const data =
             {
                 method: 'POST',
-                headers:
-                {
-                   authorization: `Bearer ${key}`,
-                   'content-type': 'application/json',
+                headers: {
+                    authorization: `Bearer ${key}`,
+                    'content-type': 'application/json',
                 },
                 url: this.settings.apiUrl + 'payments/payment',
                 json: orderData
@@ -86,17 +76,14 @@ export class Paypal
          * created, so we need to return the checkout url, which
          * is the 2nd link in the array.
          */
-        try
-        {
+        try {
             const res = await rp(data);
-            if (res.links == null || res.links.length <= 2)
-            {
+            if (res.links == null || res.links.length <= 2) {
                 throw new Error(`Failed to create paypal order. ${res}`)
             }
             return res.links[1].href;
         }
-        catch (err)
-        {
+        catch (err) {
             throw new Error(err);
         }
     }
@@ -105,14 +92,11 @@ export class Paypal
      * Returns the access token to utilize the Paypal API.
      * @returns {Promise<any>}
      */
-    async getAccessToken(): Promise<string>
-    {
-        const res = await SiteConfigs.findOne(
-            {
-                key: `paypalAuthHeader${this.settings.type == ApiType.SANDBOX ? 'Sandbox' : ''}`
-            });
-        if (res == null)
-        {
+    async getAccessToken(): Promise<string> {
+        const res = await SiteConfigs.findOne({
+            key: `paypalAuthHeader${this.settings.type == ApiType.SANDBOX ? 'Sandbox' : ''}`
+        });
+        if (res == null) {
             throw new Error("Please set Paypal auth header in site config.");
         }
         const header = res.value as string;
@@ -120,22 +104,18 @@ export class Paypal
             {
                 method: 'POST',
                 url: this.settings.apiUrl + 'oauth2/token',
-                headers:
-                {
+                headers: {
                     authorization: `Basic ${header}`,
                 },
-                form:
-                {
+                form: {
                     grant_type: 'client_credentials'
                 }
             };
-        try
-        {
+        try {
             const key = await rp(options);
             return JSON.parse(key).access_token;
         }
-        catch (err)
-        {
+        catch (err) {
             console.log(err);
         }
         return null;
