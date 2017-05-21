@@ -27,9 +27,14 @@ export class AccountController {
         return accounts;
     }
 
-    async setUnpurchased(accounts : IAccount[])
-    {
-
+    async setUnpurchased(accounts : IAccount[]) : Promise<void> {
+        for(let account of accounts) {
+            account.purchased = false;
+            const res = await account.update(account);
+            if(res['nModified'] != 1) {
+                console.log(`Failed to unpurchase an account... ${res}`)
+            }
+        }
     }
 }
 
