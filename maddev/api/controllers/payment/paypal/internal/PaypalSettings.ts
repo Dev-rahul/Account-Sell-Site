@@ -2,6 +2,7 @@ import {ApiType} from "../impl/PaypalApiType";
 import {SiteConfig} from "../../../../models/SiteConfig";
 
 export class PaypalSettings {
+
     public readonly type: ApiType;
     public readonly websiteUrl: string;
     public readonly apiUrl: string;

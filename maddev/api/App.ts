@@ -11,12 +11,11 @@ import {PaypalSettings} from "./controllers/payment/paypal/internal/PaypalSettin
 
 class App {
     constructor() {
-        const server = new WebServer(
-            {
+        const server = new WebServer({
                 port: 3000,
                 staticPath: path.join(__dirname, '../', 'client', 'public'),
                 viewPath: path.join(__dirname, '../', 'client', 'views')
-            });
+        });
 
         const apiManager = new ApiRouteManager("/api", server.app);
 

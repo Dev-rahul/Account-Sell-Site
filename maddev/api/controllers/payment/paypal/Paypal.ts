@@ -1,16 +1,24 @@
 import {ISiteConfig, SiteConfigs} from "../../../models/SiteConfig";
 import {ApiType} from "./impl/PaypalApiType";
 import {PaypalSettings} from "./internal/PaypalSettings";
+import {UnprocessedPaypal, UnprocessedPaypals} from "../../../models/UnprocessedPaypal";
 import rp = require('request-promise');
 
 export class Paypal {
+
     private settings: PaypalSettings;
 
     constructor(settings: PaypalSettings) {
         this.settings = settings;
     }
 
-    async createPayment(quantity: number) {
+    /**
+     * Creates a Paypal order from the quantity passed in.
+     * This is multiplied by the current account price to generate a total.
+     * @param quantity
+     * @returns {Promise<string>} Url of the checkout for the order.
+     */
+    async createPayment(quantity: number) : Promise<string> {
         /**
          * Lookup the account price that we currently have set
          * so we can generate the total based on the quantity.
@@ -27,6 +35,7 @@ export class Paypal {
         if (typeof price !== 'number' || isNaN(price) || price < 0) {
             throw new Error("Invalid price set for accounts. Please check site configs.");
         }
+        const total = (quantity * price).toFixed(2);
         /**
          * The order data of the actual paypal order, sent to the Paypal API to create us an order.
          */
@@ -40,9 +49,9 @@ export class Paypal {
                     [{
                         amount: {
                             currency: 'USD',
-                            total: (quantity * price).toFixed(2),
+                            total: total,
                         },
-                        description: 'Runescape Accounts'
+                        description: `${quantity} Runescape Accounts.`
                     }],
                 redirect_urls: {
                     "return_url": `${this.settings.websiteUrl}/return`,
@@ -76,16 +85,47 @@ export class Paypal {
          * created, so we need to return the checkout url, which
          * is the 2nd link in the array.
          */
+        let create;
         try {
-            const res = await rp(data);
-            if (res.links == null || res.links.length <= 2) {
-                throw new Error(`Failed to create paypal order. ${res}`)
-            }
-            return res.links[1].href;
+            create = await rp(data);
         }
         catch (err) {
             throw new Error(err);
         }
+        if (create.id == null || create.links == null || create.links.length <= 2) {
+            throw new Error(`Failed to create paypal order. ${res}`)
+        }
+        /**
+         * One we confirmed the order was created on paypal, we need to save
+         * the order in our database with the paypal id as unprocessed.
+         * This is so we can look it up later when it is time to execute
+         * the payment, to get the actual details of the order.
+         * @type {boolean}
+         */
+        const unprocessed = await this.createUnprocessedOrder(create.id, quantity, +total);
+        if (!unprocessed) {
+            throw new Error(`Failed to create unprocessed paypal order.`)
+        }
+        return create.links[1].href;
+    }
+
+    /**
+     * Generate an unprocessed order so we may lookup the order details later
+     * during payment execution.
+     * @param id
+     * @param quantity
+     * @param total
+     * @returns {Promise<boolean>} the success of it being created or not.
+     */
+    private async createUnprocessedOrder(id: string, quantity: number, total: number): Promise<boolean> {
+        try {
+            const order = new UnprocessedPaypal(id, total, quantity);
+            const res = await UnprocessedPaypals.create(order);
+            return res['_id'] != null;
+        } catch (err) {
+            console.log(err);
+        }
+        return false;
     }
 
     /**
@@ -93,9 +133,11 @@ export class Paypal {
      * @returns {Promise<any>}
      */
     async getAccessToken(): Promise<string> {
+
         const res = await SiteConfigs.findOne({
             key: `paypalAuthHeader${this.settings.type == ApiType.SANDBOX ? 'Sandbox' : ''}`
         });
+
         if (res == null) {
             throw new Error("Please set Paypal auth header in site config.");
         }
