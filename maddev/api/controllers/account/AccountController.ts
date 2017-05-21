@@ -20,9 +20,16 @@ export class AccountController {
              * and return the same accounts.
              */
             const res = Accounts.findOneAndUpdate({purchased: false}, {purchased: true});
-            accounts.push(res);
+            if(res != null) {
+                accounts.push(res);
+            }
         }
         return accounts;
+    }
+
+    async setUnpurchased(accounts : IAccount[])
+    {
+
     }
 }
 

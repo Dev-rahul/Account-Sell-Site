@@ -142,17 +142,16 @@ export class Paypal {
             throw new Error("Please set Paypal auth header in site config.");
         }
         const header = res.value as string;
-        const options =
-            {
-                method: 'POST',
-                url: this.settings.apiUrl + 'oauth2/token',
-                headers: {
-                    authorization: `Basic ${header}`,
-                },
-                form: {
-                    grant_type: 'client_credentials'
-                }
-            };
+        const options = {
+            method: 'POST',
+            url: this.settings.apiUrl + 'oauth2/token',
+            headers: {
+                authorization: `Basic ${header}`,
+            },
+            form: {
+                grant_type: 'client_credentials'
+            }
+        };
         try {
             const key = await rp(options);
             return JSON.parse(key).access_token;
