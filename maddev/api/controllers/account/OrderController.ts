@@ -6,6 +6,10 @@ import {IApiError} from "../../impl/IApiError";
 import {Util} from "../../util/Util";
 import {IAccount} from "../../models/Account";
 import {PaymentExecutor} from "../payment/paypal/PaymentExecutor";
+import {ProcessedPaypalOrder} from "../../models/ProcessedOrder";
+import {Order, Orders} from "../../models/Order";
+import {UnprocessedPaypal, UnprocessedPaypals} from "../../models/UnprocessedPaypal";
+import {PaymentMethod} from "../../models/Payment";
 
 export class OrderController {
 
@@ -36,24 +40,65 @@ export class OrderController {
         }
     }
 
+    /**
+     * Finish the Paypal order, attempting to grab the amount of accounts and
+     * return them. If we do not have enough accounts, an empty array will be returned.
+     * The payment will never be charged if the array is empty.
+     *
+     * This method SHOULD ONLY be called from the route associated with it,
+     * which should only be executed on a paypal redirect after payment.
+     * @param paymentId
+     * @param payerId
+     * @returns {Promise<any>}
+     */
     async completeOrder(paymentId : string, payerId) : Promise<IAccount[] | IApiError> {
-        const executor = new PaymentExecutor(paymentId, payerId);
-        let accounts : IAccount[];
+        const paypalSettings = await PaypalSettings.generate(ApiType.SANDBOX);
+        const executor = new PaymentExecutor(paymentId, payerId, paypalSettings);
+        let res;
         try {
-            accounts = await executor.execute();
+            res = await executor.execute();
         } catch(err) {
             console.log(err);
             return {'error' : 'Failed to complete paypal payments.'};
         }
-        if(accounts.length == 0) {
+        if(res['error'] != null) {
+            return res as IApiError;
+        }
+        const processed = res as ProcessedPaypalOrder;
+        if(processed.accounts.length == 0) {
             return {
                 error : 'We do not have enough accounts to fulfill your order.',
                 meta : 'outOfStock'
             };
         }
-        return accounts;
+        /**
+         * Save the order to the database, then return the accounts.
+         * @type {boolean}
+         */
+        const save = await this.saveOrder(paymentId, processed);
+        return processed.accounts;
     }
 
+
+    async saveOrder(paymentId : string, order : ProcessedPaypalOrder) : Promise<boolean> {
+        try {
+            const details = await UnprocessedPaypals.findOne({paymentId: paymentId}).lean().exec() as UnprocessedPaypal;
+            if (details == null) {
+                console.log("Failed to lookup unprocesed paypal order in save order.");
+                return false;
+            }
+            const names = order.accounts.map(s => s.email);
+            const o = new Order(
+                details.total, details.ip, details.buyerEmail, PaymentMethod.PAYPAL, names, order.buyer
+            );
+            const create = await Orders.create(o);
+            return create['_id'] != null;
+        } catch(err) {
+            console.log(err);
+            console.log(`Failed to save order ${paymentId}`);
+        }
+        return false;
+    }
 }
 
 export class OrderControllerRoutes {

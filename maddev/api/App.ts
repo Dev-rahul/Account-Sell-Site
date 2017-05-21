@@ -49,7 +49,6 @@ class App {
             }
             console.log("Connected to MongoDB.");
         });
-
     }
 }
 
