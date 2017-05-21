@@ -19,10 +19,14 @@ export class AccountController {
              * so another query from another purchase etc, cannot read this document
              * and return the same accounts.
              */
-            const res = Accounts.findOneAndUpdate({purchased: false}, {purchased: true});
-            if(res != null) {
-                accounts.push(res);
+            const res = await Accounts.findOneAndUpdate(
+                {purchased: false}, {purchased: true}, {new : true});
+
+            if(res == null) {
+                continue;
             }
+
+            accounts.push(res);
         }
         return accounts;
     }

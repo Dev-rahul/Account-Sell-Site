@@ -16,9 +16,11 @@ export class Paypal {
      * Creates a Paypal order from the quantity passed in.
      * This is multiplied by the current account price to generate a total.
      * @param quantity
+     * @param ip
+     * @param buyerEmail
      * @returns {Promise<string>} Url of the checkout for the order.
      */
-    async createPayment(quantity: number) : Promise<string> {
+    async createPayment(quantity: number, ip : string, buyerEmail? : string) : Promise<string> {
         /**
          * Lookup the account price that we currently have set
          * so we can generate the total based on the quantity.
@@ -102,7 +104,7 @@ export class Paypal {
          * the payment, to get the actual details of the order.
          * @type {boolean}
          */
-        const unprocessed = await this.createUnprocessedOrder(create.id, quantity, +total);
+        const unprocessed = await this.createUnprocessedOrder(create.id, quantity, +total, ip, buyerEmail);
         if (!unprocessed) {
             throw new Error(`Failed to create unprocessed paypal order.`)
         }
@@ -115,11 +117,13 @@ export class Paypal {
      * @param id
      * @param quantity
      * @param total
+     * @param ip
+     * @param email
      * @returns {Promise<boolean>} the success of it being created or not.
      */
-    private async createUnprocessedOrder(id: string, quantity: number, total: number): Promise<boolean> {
+    private async createUnprocessedOrder(id: string, quantity: number, total: number, ip : string, email? : string): Promise<boolean> {
         try {
-            const order = new UnprocessedPaypal(id, total, quantity);
+            const order = new UnprocessedPaypal(id, total, quantity, ip, email);
             const res = await UnprocessedPaypals.create(order);
             return res['_id'] != null;
         } catch (err) {

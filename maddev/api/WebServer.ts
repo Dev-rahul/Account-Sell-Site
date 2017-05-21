@@ -1,4 +1,5 @@
 import express = require('express');
+import bodyParser = require('body-parser');
 
 export class WebServer {
     public readonly app: express.Application;
@@ -6,6 +7,8 @@ export class WebServer {
 
     constructor(settings: IWebServerSettings) {
         this.app = express();
+        this.app.use(bodyParser.urlencoded({extended: false}));
+        this.app.use(bodyParser.json());
         this.settings = settings;
         if (this.settings != null) {
             this.applySettings();

@@ -5,9 +5,7 @@ import {ViewRouteManager} from "./routes/ViewRouteManager";
 import {ApiRouteManager} from "./routes/ApiRouteManager";
 import {ApiAccountRoutes} from "./routes/children/ApiAccountRoutes";
 import {MongoError} from "mongodb";
-import {Paypal} from "./controllers/payment/paypal/Paypal";
-import {ApiType} from "./controllers/payment/paypal/impl/PaypalApiType";
-import {PaypalSettings} from "./controllers/payment/paypal/internal/PaypalSettings";
+import {ApiOrderRoutes} from "./routes/children/ApiOrderRoutes";
 
 class App {
     constructor() {
@@ -19,11 +17,12 @@ class App {
 
         const apiManager = new ApiRouteManager("/api", server.app);
 
-        const accountRoutes = new ApiAccountRoutes("/accounts", apiManager);
         /**
-         * Set the account routes.
+         * Set the sub routes.
          */
-        accountRoutes.initialize();
+         new ApiAccountRoutes("/accounts", apiManager).initialize();
+         new ApiOrderRoutes("/order", apiManager).initialize();
+
         /**
          * Initialize the JSON API Routes of the server.
          */
@@ -51,15 +50,7 @@ class App {
             console.log("Connected to MongoDB.");
         });
 
-        const getKey = async () => {
-            const settings = await PaypalSettings.generate(ApiType.SANDBOX);
-            const paypal = new Paypal(settings);
-            const payment = await paypal.createPayment(10);
-            console.log(payment);
-        };
-        getKey();
     }
-
 }
 
 new App();
