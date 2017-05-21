@@ -6,6 +6,10 @@ import {ViewRouteManager} from "./routes/ViewRouteManager";
 import {ApiRouteManager} from "./routes/ApiRouteManager";
 import {ApiAccountRoutes} from "./routes/children/ApiAccountRoutes";
 import {MongoError} from "mongodb";
+import {Accounts} from "./models/Account";
+import {Paypal} from "./controllers/payment/paypal/Paypal";
+import {ApiType} from "./controllers/payment/paypal/impl/PaypalApiType";
+import {PaypalSettings} from "./controllers/payment/paypal/internal/PaypalSettings";
 
 class App
 {
@@ -51,7 +55,17 @@ class App
             }
             console.log("Connected to MongoDB.");
         });
+
+        const getKey = async() =>
+        {
+            const settings = await PaypalSettings.generate(ApiType.SANDBOX);
+            const paypal = new Paypal(settings);
+            const payment = await paypal.createPayment(10);
+            console.log(payment);
+        };
+        getKey();
     }
 
 }
 new App();
+

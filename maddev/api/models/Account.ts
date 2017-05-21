@@ -5,7 +5,7 @@ export class Account
     public readonly username : string;
     public readonly email : string;
     public readonly password : string;
-    public readonly purchased : boolean;
+    public purchased : boolean;
     public readonly buyerEmail : string;
 
     constructor(username: string, email: string, password: string)
