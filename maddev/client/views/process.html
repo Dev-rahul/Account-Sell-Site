@@ -2,9 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>MadAccounts | Instant Delivery</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/cover.css">
+    <link rel="stylesheet" href="/css/process.css">
 </head>
 <body>
-$END$
+
+<div class="site-wrapper">
+
+    <div class="container">
+
+        <div class="cover-container">
+
+            <div class="masthead clearfix">
+                <div class="inner">
+                    <h3 class="masthead-brand">MadAccounts</h3>
+                    <nav class="nav nav-masthead">
+                        <a class="nav-link" href="#">Purchase</a>
+                        <a class="nav-link" href="#">FAQ</a>
+                        <a class="nav-link" href="#">Support</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div id="processing-order" class="text-center">
+                <h3>Processing Order...</h3>
+                <br>
+                <h4>Please do not close this page.</h4>
+                <br>
+            </div>
+
+            <div id="order-ready" style="display: none">
+                <h3>Your order is ready :)</h3>
+                <br>
+                <p>Click below to download the accounts in a JSON format or as a text file with a colon as a delimiter.</p>
+                <p>The accounts are in the following format, Username:Email:Password</p>
+                <button class="btn btn-primary fluid" id="download-json">Download Accounts as JSON</button>
+                <br><br>
+                <button class="btn btn-primary fluid" id="download-text">Download Accounts as Text File</button>
+                <br><br>
+                <p>Need help? Send us an email at <a href="mailto:dev@madev.me">dev@madev.me</a> </p>
+                <br>
+                <p style="color: yellow">Please note, if you did not enter an email address on the order form, your accounts
+                will not be accessible again from this page if you close it.</p>
+            </div>
+
+            <div class="mastfoot">
+                <div class="inner">
+                    <br><br>
+                    <p>&copy; MadAccounts | 2017</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"
+        integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"
+        integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+<script src="/js/config.js"></script>
+<script src="/js/util.js"></script>
 </body>
+
+<script>
+
+    $(document).ready(function () {
+        processOrder();
+    });
+
+    function processOrder() {
+        var paymentId = getQuery("paymentId");
+        var payerId = getQuery("PayerID");
+        var api = getApiUrl();
+        $.post(api + '/order/process', {paymentId : paymentId, payerId : payerId}).then(function (res) {
+            console.log(res);
+            if(res.error != null) {
+                alert(res.error);
+                return;
+            }
+            localStorage.setItem('lastPurchase', JSON.stringify(res));
+            $('#processing-order').hide();
+            $('#order-ready').show();
+            $('#download-json').click(function () {
+                var hidden = document.createElement('a');
+                hidden.href = 'data:attachment/text,' + encodeURI(JSON.stringify(res));
+                hidden.target = '_blank';
+                hidden.download = 'accs.json';
+                hidden.click();
+            });
+            $('#download-text').click(function () {
+                var hidden = document.createElement('a');
+                var accounts = res;
+                var result = '';
+                accounts.forEach(function (a) {
+                    result += a.username + ':' + a.email + ':' + a.password + '\n';
+                });
+                hidden.href = 'data:attachment/text,' + encodeURI(result);
+                hidden.target = '_blank';
+                hidden.download = 'accs.txt';
+                hidden.click();
+            })
+        })
+    }
+
+</script>
+
+
 </html>

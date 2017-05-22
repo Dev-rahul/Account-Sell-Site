@@ -2,9 +2,154 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>MadAccounts | Instant Delivery</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/cover.css">
 </head>
 <body>
-<p>Hello</p>
+
+<div class="site-wrapper">
+
+    <div class="site-wrapper-inner">
+
+        <div class="cover-container">
+
+            <div class="masthead clearfix">
+                <div class="inner">
+                    <h3 class="masthead-brand">MadAccounts</h3>
+                    <nav class="nav nav-masthead">
+                        <a class="nav-link active" href="#">Purchase</a>
+                        <a class="nav-link" href="#">FAQ</a>
+                        <a class="nav-link" href="#">Support</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="inner cover">
+                <h1 class="cover-heading">How many accounts would you like to purchase?</h1>
+                <br>
+                <h6 id="stock-count">Current Stock: Loading...</h6>
+                <input id="quantity-input" type="number" class="form-control" value="10">
+                <br>
+                <p class="lead">
+                    <a href="#" class="btn btn-lg btn-primary" id="checkout-button">Checkout Now</a>
+                </p>
+            </div>
+
+            <div class="mastfoot">
+                <div class="inner">
+                    <br><br>
+                    <p>&copy; MadAccounts | 2017</p>
+                </div>
+            </div>
+
+        </div>
+        <br><br>
+        <div class="container text-center">
+            <div class="row marketing justify-content-md-center">
+                <div class="col-lg-5 text-left">
+                    <h4>No Bots Ever</h4>
+                    <p>Our service does not condone the use of bot clients to create accounts.</p>
+                    <p>You can sleep sound at night knowing our accounts have <span style="color: yellow">NEVER</span> been created using a RuneScape bot-client.</p>
+                    <div class="divider"></div>
+                    <h4>Secure</h4>
+                    <p>All accounts are created with a randomly generated password, no two passwords will be the same.</p>
+                    <p>Each account has only one sole owner (MadAccounts), and it is non-recoverable by us.</p>
+                    <div class="divider"></div>
+                    <h4>Quality Usernames.</h4>
+                    <p>Each account uses realistic username and email.
+                        You will <span style="color: yellow">NEVER</span> see an account with a bot username such as "jasdkkopq21".
+                    </p>
+
+                </div>
+
+                <div class="col-lg-5 text-left" style="margin-left: 15px">
+                    <h4>Prevent Chainbans.</h4>
+                    <p>All accounts are created on a proxy service rotating through over 220+ proxies (changed daily)!</p>
+                    <p>You can be sure our accounts will never be chain-banned due to never sharing the same IP.</p>
+                    <div class="divider"></div>
+                    <h4>Instant Delivery</h4>
+                    <p>With our automated delivery system, you will receive your accounts the second your payment goes through.</p>
+                    <p>No more waiting for sellers to be online!</p>
+                    <div class="divider"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+<script src="/js/config.js"></script>
 </body>
+
+<script>
+
+    $(document).ready(function () {
+        var api = getApiUrl();
+        getPrice(api);
+    });
+
+    function getPrice(api) {
+        $.getJSON(api + '/accounts/total').then(function (res) {
+            if(res.error != null || res.price <= 0) {
+                return $('#checkout-button').text('Failed to load price and count, please refresh.');
+            }
+            setValuesAndCreateListeners(res);
+        })
+    }
+    
+    function setValuesAndCreateListeners(totals) {
+        var $input = $('#quantity-input');
+        var $checkout = $('#checkout-button');
+        var max = totals.max;
+        var price = totals.price;
+        $('#stock-count').text('Current Stock: ' + totals.count + ' Accounts.');
+        var total = numeral($input.val() * price).format('0,00.00');
+        setCheckoutText(total);
+
+        $checkout.click(function () {
+            if($checkout.hasClass('disabled')) {
+                return;
+            }
+            localStorage.removeItem("quantity");
+            localStorage.removeItem("price");
+            localStorage.setItem("quantity", $input.val());
+            localStorage.setItem("price", numeral($input.val() * price).format('0,00.00'));
+            window.location.replace("/checkout");
+        });
+
+        $input.keyup(function () {
+            const value = parseInt($input.val());
+            if(typeof value !== 'number' || isNaN(value) || value <= 0) {
+                $checkout
+                    .addClass('disabled')
+                    .text('Please enter a valid quantity above 0.');
+                return;
+            }
+            /**
+             * Prevent user from buying a huge amount of accounts currently
+             * while testing, since we are in beta.
+             */
+            if(parseFloat(value) > max) {
+                $checkout
+                    .addClass('disabled')
+                    .text('Currently, you may not purchase more than ' + max + ' accounts at once.');
+                return;
+            }
+            var total = numeral(value * price).format('0,00.00');
+            setCheckoutText(total);
+        })
+    }
+
+    function setCheckoutText(total) {
+        $('#checkout-button').removeClass('disabled').text('Checkout Now ($' + total + ')');
+    }
+
+</script>
+
+
+
 </html>

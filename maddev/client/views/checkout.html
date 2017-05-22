@@ -2,9 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>MadAccounts | Instant Delivery</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/cover.css">
+    <link rel="stylesheet" href="/css/checkout.css">
 </head>
 <body>
-$END$
+
+<div class="site-wrapper">
+
+    <div class="container">
+
+        <div class="cover-container">
+
+            <div class="masthead clearfix">
+                <div class="inner">
+                    <h3 class="masthead-brand">MadAccounts</h3>
+                    <nav class="nav nav-masthead">
+                        <a class="nav-link" href="#">Purchase</a>
+                        <a class="nav-link" href="#">FAQ</a>
+                        <a class="nav-link" href="#">Support</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div id="order-details" class="text-left">
+                <h3>Order Details:</h3>
+                <br>
+                <h5 id="quantity">Total Quantity: Loading...</h5>
+                <br>
+                <h5 id="price">Total Price: Loading...</h5>
+                <br>
+                <h5>Level 3 RuneScape accounts created on a private proxy with realistic username and email.</h5>
+                <br>
+                <label>Where should we send your accounts? (Optional, but <span style="color: yellow">recommended</span>.)</label>
+                <input type="email" class="form-control" id="order-email" placeholder="Email Address">
+                <span style="color: yellow;">Please note, your accounts will only be accessible on the payment page if no email is entered.</span>
+            </div>
+
+
+            <div id="checkout-paypal">
+                <br>
+                <button class="btn btn-primary fluid" id="paypal-checkout-button" style="width: 100%"><h3>Proceed to Paypal</h3></button>
+            </div>
+
+            <div class="mastfoot">
+                <div class="inner">
+                    <br><br>
+                    <p>&copy; MadAccounts | 2017</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+<script src="/js/config.js"></script>
 </body>
+
+<script>
+
+    $(document).ready(function () {
+        var quantity = parseInt(localStorage.getItem("quantity"));
+        var price = numeral(localStorage.getItem("price")).format('0,00.00');
+        $('#quantity').html('Total Quantity: <span style="color: yellow">' + quantity + '</span> RuneScape accounts.');
+        $('#price').html('Total Price: <span style="color: yellow">$' + price + '</span>');
+        checkout(quantity);
+    });
+    
+    function checkout(quantity) {
+        $('#paypal-checkout-button').click(function () {
+            var before =  $('#paypal-checkout-button').html();
+            $('#paypal-checkout-button').html('<h3>Processing... Please wait.</h3>');
+            var api = getApiUrl();
+            var email = $('#order-email').val();
+            var data = {
+                quantity : quantity
+            };
+            if(email != null && email.length > 0) {
+                data.email = email;
+            }
+            $.post(api + '/order/checkout', data).then(function (res) {
+                if(res.error != null) {
+                    alert(res.error);
+                    $('#paypal-checkout-button').html(before);
+                    return;
+                }
+                if(res.checkout == null) {
+                    $('#paypal-checkout-button').html(before);
+                    alert('Something went wrong.');
+                    return;
+                }
+                window.location.replace(res.checkout);
+            });
+        })
+    }
+
+</script>
+
+
+
 </html>
