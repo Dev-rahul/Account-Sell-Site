@@ -7,6 +7,10 @@ import {ApiAccountRoutes} from "./routes/children/ApiAccountRoutes";
 import {MongoError} from "mongodb";
 import {ApiOrderRoutes} from "./routes/children/ApiOrderRoutes";
 import {Telegram} from "./util/Telegram";
+import {IOrder, Order, Orders} from "./models/Order";
+import {Emailer} from "./controllers/account/Emailer";
+import {AccountClient} from "./models/Account";
+import {TestUtil} from "./TestUtil";
 
 class App {
     constructor() {
@@ -55,7 +59,7 @@ class App {
         });
 
         Telegram.initialize();
-
+       TestUtil.resetAccounts();
     }
 }
 

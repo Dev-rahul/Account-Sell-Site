@@ -6,10 +6,11 @@ import {Util} from "../../util/Util";
 import {AccountClient, IAccount} from "../../models/Account";
 import {PaymentExecutor} from "../payment/paypal/PaymentExecutor";
 import {ProcessedPaypalOrder} from "../../models/ProcessedOrder";
-import {Order, Orders} from "../../models/Order";
+import {IOrder, Order, Orders} from "../../models/Order";
 import {UnprocessedPaypal, UnprocessedPaypals} from "../../models/UnprocessedPaypal";
 import {PaymentMethod} from "../../models/Payment";
 import {Telegram} from "../../util/Telegram";
+import {Emailer} from "./Emailer";
 
 export class OrderController {
 
@@ -77,17 +78,19 @@ export class OrderController {
          * Save the order to the database, then return the accounts.
          * @type {boolean}
          */
-        const save = await this.saveOrder(paymentId, processed);
-        return processed.accounts.map(p => AccountClient.fromAccount(p));
+        const order = await this.saveOrder(paymentId, processed);
+        const client = processed.accounts.map(p => AccountClient.fromAccount(p));
+        new Emailer(order, client).sendEmail();
+        return client;
     }
 
 
-    async saveOrder(paymentId : string, order : ProcessedPaypalOrder) : Promise<boolean> {
+    async saveOrder(paymentId : string, order : ProcessedPaypalOrder) : Promise<IOrder> {
         try {
             const details = await UnprocessedPaypals.findOne({paymentId: paymentId}).lean().exec() as UnprocessedPaypal;
             if (details == null) {
                 console.log("Failed to lookup unprocesed paypal order in save order.");
-                return false;
+                return null;
             }
             const names = order.accounts.map(s => s.email);
             const o = new Order(
@@ -95,12 +98,12 @@ export class OrderController {
             );
             const create = await Orders.create(o);
             Telegram.logPurchase(create);
-            return create['_id'] != null;
+            return create;
         } catch(err) {
             console.log(err);
             console.log(`Failed to save order ${paymentId}`);
         }
-        return false;
+        return null;
     }
 }
 
