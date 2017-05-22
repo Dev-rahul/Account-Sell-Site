@@ -26,7 +26,7 @@ export class AccountController {
         }
         return config.value as number;
     }
-    
+
     /**
      * Grabs a certain quantity of accounts and sets them as purchased, then returns them.
      * This method assures that each account is unique.
