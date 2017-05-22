@@ -3,7 +3,7 @@ import {Paypal} from "../payment/paypal/Paypal";
 import {PaypalSettings} from "../payment/paypal/internal/PaypalSettings";
 import {IApiError} from "../../impl/IApiError";
 import {Util} from "../../util/Util";
-import {IAccount} from "../../models/Account";
+import {AccountClient, IAccount} from "../../models/Account";
 import {PaymentExecutor} from "../payment/paypal/PaymentExecutor";
 import {ProcessedPaypalOrder} from "../../models/ProcessedOrder";
 import {Order, Orders} from "../../models/Order";
@@ -23,11 +23,13 @@ export class OrderController {
      * @returns {Promise<any>}
      */
     async createOrder(quantity : number, ip : string, buyerEmail? : string) : Promise<string | IApiError> {
-        if(quantity == null || typeof quantity !== 'number' || isNaN(quantity)) {
+        if(quantity == null || typeof quantity !== 'number' || isNaN(quantity) || quantity <= 0) {
             return {'error' : 'Invalid quantity.'};
         }
-        if(buyerEmail != null && (typeof buyerEmail != 'string') || !Util.isEmail(buyerEmail)) {
-            return {'error' : 'Invalid email.'};
+        if(buyerEmail != null) {
+            if((typeof buyerEmail != 'string') || !Util.isEmail(buyerEmail)) {
+                return {'error' : 'Invalid email.'};
+            }
         }
         const settings = await PaypalSettings.generate();
         const paypal = new Paypal(settings);
@@ -51,7 +53,7 @@ export class OrderController {
      * @param payerId
      * @returns {Promise<any>}
      */
-    async completeOrder(paymentId : string, payerId) : Promise<IAccount[] | IApiError> {
+    async completeOrder(paymentId : string, payerId) : Promise<AccountClient[] | IApiError> {
         const paypalSettings = await PaypalSettings.generate();
         const executor = new PaymentExecutor(paymentId, payerId, paypalSettings);
         let res;
@@ -76,7 +78,7 @@ export class OrderController {
          * @type {boolean}
          */
         const save = await this.saveOrder(paymentId, processed);
-        return processed.accounts;
+        return processed.accounts.map(p => AccountClient.fromAccount(p));
     }
 
 
@@ -119,7 +121,11 @@ export class OrderControllerRoutes {
         const quantity = req.body.quantity;
         const email = req.body.email;
 
-        const checkout = await instance.createOrder(quantity, Util.getIP(req), email);
+        if(quantity == null) {
+            return res.json({'error' : 'Invalid quantity.'});
+        }
+
+        const checkout = await instance.createOrder(parseInt(quantity), Util.getIP(req), email);
         /**
          * Failed to create checkout, display error to user.
          */

@@ -20,7 +20,7 @@ export class Paypal {
      * @param buyerEmail
      * @returns {Promise<string>} Url of the checkout for the order.
      */
-    async createPayment(quantity: number, ip : string, buyerEmail? : string) : Promise<string> {
+    async createPayment(quantity: number, ip: string, buyerEmail?: string): Promise<string> {
         /**
          * Lookup the account price that we currently have set
          * so we can generate the total based on the quantity.
@@ -121,7 +121,7 @@ export class Paypal {
      * @param email
      * @returns {Promise<boolean>} the success of it being created or not.
      */
-    private async createUnprocessedOrder(id: string, quantity: number, total: number, ip : string, email? : string): Promise<boolean> {
+    private async createUnprocessedOrder(id: string, quantity: number, total: number, ip: string, email?: string): Promise<boolean> {
         try {
             const order = new UnprocessedPaypal(id, total, quantity, ip, email);
             const res = await UnprocessedPaypals.create(order);

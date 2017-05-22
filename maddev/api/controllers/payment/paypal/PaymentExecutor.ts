@@ -41,7 +41,7 @@ export class PaymentExecutor {
          */
         if (purchase.length < details.quantity) {
             await controller.setUnpurchased(purchase);
-            return {error : 'Out of stock, unable to process order.', meta : 'outOfStock'};
+            return {error : 'Out of stock, unable to process order. You have not been charged.', meta : 'outOfStock'};
         }
         /**
          * If we reach here, then that means we have enough accounts to fulfill the order.

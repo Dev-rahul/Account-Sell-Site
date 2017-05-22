@@ -24,7 +24,7 @@ export class Telegram {
     }
 
     static async logPurchase(order : Order) {
-        const parsed = `Total: $${order.total}, Accounts: ${order.totalAccounts}, Buyer Email: ${order.buyerEmail}, Name: ${order.buyer.firstName} ${order.buyer.lastName}`;
+        const parsed = `Total: $${order.total}, Accounts: ${order.totalAccounts}, Buyer Email: ${order.buyerEmail == null ? 'None.' : order.buyerEmail}, Name: ${order.buyer.firstName} ${order.buyer.lastName}`;
         return Telegram.log(parsed, Telegram.data.logOrderNumber);
     }
 

@@ -27,3 +27,20 @@ const schema = new Schema({
 export interface IAccount extends Account, Document {}
 
 export const Accounts = model<IAccount>("Accounts", schema);
+
+export class AccountClient {
+
+    public readonly username: string;
+    public readonly email: string;
+    public readonly password: string;
+
+    constructor(username: string, email: string, password: string) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
+    static fromAccount(account : IAccount) {
+        return new AccountClient(account.username, account.email, account.password);
+    }
+}

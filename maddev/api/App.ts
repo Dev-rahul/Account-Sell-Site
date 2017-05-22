@@ -35,6 +35,8 @@ class App {
          */
         new ViewRouteManager(server.app)
             .addView("/", "app")
+            .addView("/checkout", "checkout")
+            .addView("/return", "process")
             .initialize();
 
         /**

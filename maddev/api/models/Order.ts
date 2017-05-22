@@ -29,7 +29,7 @@ export class Order {
 const schema = new Schema({
     total: {required: true, type: Number},
     buyerIP: {required: true, type: String},
-    buyerEmail: {required: true, type: String},
+    buyerEmail: {required: false, type: String},
     totalAccounts: {required: true, type: Number},
     paymentMethod: {required: true, type: Number},
     accountEmails : {require : true, type : [String]},

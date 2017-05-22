@@ -1,5 +1,7 @@
 import express = require('@types/express');
 import {Accounts, IAccount} from "../../models/Account";
+import {ISiteConfig, SiteConfigs} from "../../models/SiteConfig";
+import {Telegram} from "../../util/Telegram";
 
 export class AccountController {
 
@@ -7,6 +9,24 @@ export class AccountController {
         return await Accounts.find({purchased: false}).count();
     }
 
+    async getPrice(): Promise<number> {
+        const config = await SiteConfigs.findOne({key : 'accountPrice'}).lean().exec() as ISiteConfig;
+        if(config == null) {
+            await Telegram.log("Failed to get account price, not found in site configs.");
+            return -1;
+        }
+        return config.value as number;
+    }
+
+    async getMaxAllowedToBuy() : Promise<number> {
+        const config = await SiteConfigs.findOne({key : 'accountMaxAllowed'}).lean().exec() as ISiteConfig;
+        if(config == null) {
+            await Telegram.log("Failed to get account max allowed, not found in site configs.");
+            return -1;
+        }
+        return config.value as number;
+    }
+    
     /**
      * Grabs a certain quantity of accounts and sets them as purchased, then returns them.
      * This method assures that each account is unique.
@@ -47,6 +67,9 @@ export class AccountControllerRoutes {
 
     async getTotalAccounts(req: express.Request, res: express.Response) {
         const controller = AccountControllerRoutes.controller;
-        return res.json({'count': await controller.getTotalAccounts()});
+        const price = await controller.getPrice();
+        const total = await controller.getTotalAccounts();
+        const max = await controller.getMaxAllowedToBuy();
+        return res.json({'count': total, 'price' : price, 'max' : max});
     }
 }
